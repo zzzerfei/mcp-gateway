@@ -1,0 +1,26 @@
+# ── 依赖 / 构建产物 ──
+node_modules/
+dist/
+.vite/
+
+# ── 本地运行时数据（数据库、备份、PID、临时缓存）──
+data/
+*.db
+*.db-shm
+*.db-wal
+.run/
+.npm-cache/
+*.log
+
+# ── 密钥与本地配置：只提交 .env.example ──
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+
+# ── 系统 / 编辑器 ──
+.DS_Store
+.idea/
+.vscode/
+__pycache__/

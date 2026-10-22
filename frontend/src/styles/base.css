@@ -1,0 +1,226 @@
+/* ─────────────────────────────────────────────────────────────
+   全局基础样式 + 主题 token。
+   所有颜色只在 :root / .dark 两处定义，页面与 shortcuts 只引用语义变量，
+   切换主题时无需改任何组件。
+
+   品牌色 #398FF6：
+   - 亮色下作为填充/图形/选中态可用；作为文字仅 3.26:1，故文字态换 #1873D6（4.71:1）
+   - 暗色下 #398FF6 于 #0E1013 达 5.79:1；文字态用 #5AA4F8（7.29:1）
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  color-scheme: light;
+
+  /* 基底 */
+  --mgw-bg: #f6f7f9;
+  --mgw-surface: #ffffff;
+  --mgw-surface-2: #f1f3f5;
+  --mgw-inset: #f2f4f7;
+  --mgw-overlay: rgba(17, 24, 32, 0.42);
+
+  /* 文本 */
+  --mgw-fg: #191c1d;
+  --mgw-muted: #5c6266;
+  --mgw-faint: #838a90;
+
+  /* 描边 */
+  --mgw-line: #e3e6ea;
+  --mgw-line-strong: #cbd2d9;
+
+  /* 品牌 */
+  --mgw-accent: #398ff6;
+  --mgw-accent-solid: #1873d6;
+  --mgw-accent-solid-hover: #1465bf;
+  --mgw-accent-text: #1873d6;
+  --mgw-accent-soft: rgba(57, 143, 246, 0.1);
+  --mgw-accent-line: rgba(57, 143, 246, 0.32);
+  --mgw-accent-fg: #ffffff;
+
+  /* 状态 */
+  --mgw-ok: #0f7a4f;
+  --mgw-ok-soft: rgba(15, 122, 79, 0.1);
+  --mgw-ok-line: rgba(15, 122, 79, 0.26);
+  --mgw-warn: #a15c07;
+  --mgw-warn-soft: rgba(161, 92, 7, 0.1);
+  --mgw-warn-line: rgba(161, 92, 7, 0.26);
+  --mgw-danger: #c62828;
+  --mgw-danger-soft: rgba(198, 40, 40, 0.09);
+  --mgw-danger-line: rgba(198, 40, 40, 0.26);
+
+  /* 玻璃面 / 阴影 / 高光 */
+  --mgw-glass-bg: rgba(255, 255, 255, 0.84);
+  --mgw-glass-border: #e5e8ed;
+  --mgw-shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04),
+    0 8px 24px rgba(16, 24, 40, 0.06);
+  --mgw-sheen: rgba(255, 255, 255, 0.9);
+
+  /* 背景光晕 / 网格 */
+  --mgw-glow-1: rgba(57, 143, 246, 0.1);
+  --mgw-glow-2: rgba(57, 143, 246, 0.06);
+  --mgw-glow-3: rgba(57, 143, 246, 0.045);
+  --mgw-grid: rgba(16, 24, 40, 0.035);
+
+  /* 图表 */
+  --mgw-chart-line: #191c1d;
+  --mgw-chart-fill: #398ff6;
+  --mgw-chart-grid: #101820;
+
+  --mgw-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  --mgw-mono: 'SF Mono', 'JetBrains Mono', 'Fira Code', ui-monospace, Menlo,
+    Consolas, monospace;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --mgw-bg: #0e1013;
+  --mgw-surface: #16181c;
+  --mgw-surface-2: #1e2126;
+  --mgw-inset: #101216;
+  --mgw-overlay: rgba(2, 4, 8, 0.62);
+
+  --mgw-fg: rgba(255, 255, 255, 0.92);
+  --mgw-muted: rgba(255, 255, 255, 0.6);
+  --mgw-faint: rgba(255, 255, 255, 0.38);
+
+  --mgw-line: rgba(255, 255, 255, 0.09);
+  --mgw-line-strong: rgba(255, 255, 255, 0.18);
+
+  --mgw-accent: #398ff6;
+  --mgw-accent-solid: #1873d6;
+  --mgw-accent-solid-hover: #2b82ee;
+  --mgw-accent-text: #5aa4f8;
+  --mgw-accent-soft: rgba(57, 143, 246, 0.16);
+  --mgw-accent-line: rgba(57, 143, 246, 0.42);
+  --mgw-accent-fg: #ffffff;
+
+  --mgw-ok: #4ade80;
+  --mgw-ok-soft: rgba(74, 222, 128, 0.12);
+  --mgw-ok-line: rgba(74, 222, 128, 0.3);
+  --mgw-warn: #fbbf24;
+  --mgw-warn-soft: rgba(251, 191, 36, 0.12);
+  --mgw-warn-line: rgba(251, 191, 36, 0.3);
+  --mgw-danger: #f87171;
+  --mgw-danger-soft: rgba(248, 113, 113, 0.12);
+  --mgw-danger-line: rgba(248, 113, 113, 0.3);
+
+  --mgw-glass-bg: rgba(255, 255, 255, 0.045);
+  --mgw-glass-border: rgba(255, 255, 255, 0.09);
+  --mgw-shadow-card: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --mgw-sheen: rgba(255, 255, 255, 0.14);
+
+  --mgw-glow-1: rgba(57, 143, 246, 0.12);
+  --mgw-glow-2: rgba(57, 143, 246, 0.07);
+  --mgw-glow-3: rgba(57, 143, 246, 0.05);
+  --mgw-grid: rgba(255, 255, 255, 0.022);
+
+  --mgw-chart-line: #ffffff;
+  --mgw-chart-fill: #ffffff;
+  --mgw-chart-grid: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--mgw-font);
+  background: var(--mgw-bg);
+  color: var(--mgw-fg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow: hidden; /* 布局内部滚动，body 不滚 */
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* 背景：品牌色极低透明度径向光晕 + 细网格，亮暗自适应 */
+.mgw-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 40rem at 12% -8%, var(--mgw-glow-1), transparent 60%),
+    radial-gradient(50rem 40rem at 108% 12%, var(--mgw-glow-2), transparent 55%),
+    radial-gradient(40rem 30rem at 50% 120%, var(--mgw-glow-3), transparent 60%);
+}
+
+.mgw-backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.6;
+  background-image:
+    linear-gradient(var(--mgw-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mgw-grid) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(circle at 50% 40%, black, transparent 85%);
+}
+
+/* 等宽字体工具类（审计详情、Key、JSON 展示） */
+.mono {
+  font-family: var(--mgw-mono);
+  font-variant-ligatures: none;
+}
+
+/* 滚动条：极细、半透明 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--mgw-line-strong);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mgw-faint);
+  background-clip: content-box;
+}
+
+::selection {
+  background: var(--mgw-accent-soft);
+  color: var(--mgw-accent-text);
+}
+
+/* 路由切换淡入 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* 遮罩弹层淡入 */
+.mask-enter-active,
+.mask-leave-active {
+  transition: opacity 0.2s ease;
+}
+.mask-enter-from,
+.mask-leave-to {
+  opacity: 0;
+}
+
+/* 通用:focus-visible 描边（键盘可达性） */
+:focus-visible {
+  outline: 2px solid var(--mgw-accent);
+  outline-offset: 2px;
+}

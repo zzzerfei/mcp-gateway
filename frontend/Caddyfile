@@ -1,0 +1,36 @@
+{
+	admin off
+}
+
+# SITE_ADDRESS 控制监听方式：
+#   :80              纯 HTTP（IP 访问，先用这个）
+#   mcp.example.com  域名，Caddy 自动申请并续期 Let's Encrypt 证书
+{$SITE_ADDRESS::80} {
+	encode gzip zstd
+
+	# 管理端 API、MCP 通道、探活统一走后端；/metrics 不对外暴露
+	@backend path /admin/api/* /mcp /mcp/* /healthz
+	handle @backend {
+		reverse_proxy gateway:8080 {
+			# SSE（GET /mcp）需要立即 flush，不能缓冲
+			flush_interval -1
+		}
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+
+		# 带 hash 的静态资源长缓存，index.html 不缓存
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+		header /index.html Cache-Control "no-cache"
+	}
+
+	header {
+		-Server
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+}

@@ -1,0 +1,15 @@
+{
+  "$comment": "网关基础配置。优先级：内置默认 < 本文件 < 环境变量。敏感项(secret/adminToken)请走环境变量或 *_FILE，勿写入本文件提交仓库。",
+  "port": 8080,
+  "host": "127.0.0.1",
+  "publicOrigin": "http://127.0.0.1:8080",
+  "allowedOrigins": ["http://localhost:5173", "http://127.0.0.1:5173"],
+  "outboundAllowedCidrs": ["10.0.0.0/8", "127.0.0.1/32", "192.168.0.0/16"],
+  "maxSessions": 300,
+  "sessionIdleTimeoutS": 1800,
+  "stdioMax": 8,
+  "auditFlushMs": 1000,
+  "auditFlushSize": 100,
+  "registryRefreshIntervalS": 300,
+  "imWebhook": ""
+}

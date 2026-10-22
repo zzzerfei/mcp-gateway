@@ -1,0 +1,27 @@
+{
+  "name": "mcp-gateway-frontend",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP 网关管理后台 —— Vue3 + Vite + UnoCSS + TS，语义 token 亮/暗主题",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "type-check": "vue-tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@logto/browser": "^3.1.1",
+    "pinia": "^2.2.6",
+    "vue": "^3.5.13",
+    "vue-router": "^4.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "typescript": "^5.6.3",
+    "unocss": "^0.64.1",
+    "vite": "^5.4.11",
+    "vue-tsc": "^2.1.10"
+  }
+}

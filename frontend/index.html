@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>MCP 网关 · 治理控制台</title>
+    <!-- 首屏底色：在任何渲染前确定亮/暗，避免白闪或黑闪 -->
+    <script>
+      (function () {
+        var dark = true;
+        try {
+          var saved = localStorage.getItem('mgw-theme');
+          dark = saved
+            ? saved === 'dark'
+            : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        } catch (e) {
+          /* localStorage 不可用时按深色兜底 */
+        }
+        document.documentElement.classList.toggle('dark', dark);
+      })();
+    </script>
+    <style>
+      html, body, #app { height: 100%; margin: 0; }
+      html { background: #f6f7f9; }
+      html.dark { background: #0e1013; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
