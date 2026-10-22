@@ -1,14 +1,12 @@
-# 基础镜像可通过 --build-arg 覆盖（例如国内镜像源 docker.m.daocloud.io/library/node:22-bookworm-slim）
+# 基础镜像可通过 --build-arg 覆盖（例如国内镜像源 docker.1ms.run/library/node:22-bookworm-slim）
 ARG NODE_IMAGE=node:22-bookworm-slim
+# 构建阶段用官方全量镜像：自带 python3/make/g++，无需 apt（受限网络里 apt 拉 Debian 源经常卡住），
+# better-sqlite3 取不到预编译包时可以直接源码编译
+ARG BUILD_IMAGE=node:22-bookworm
 
 # 后端镜像：NestJS + better-sqlite3（原生模块需在构建阶段编译）
-FROM ${NODE_IMAGE} AS build
+FROM ${BUILD_IMAGE} AS build
 WORKDIR /app
-
-# better-sqlite3 优先拿预编译包，取不到时走源码编译，需要这三件
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends python3 make g++ \
-  && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund

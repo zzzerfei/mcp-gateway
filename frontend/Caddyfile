@@ -2,9 +2,9 @@
 	admin off
 }
 
-# SITE_ADDRESS 控制监听方式：
-#   :80              纯 HTTP（IP 访问，先用这个）
-#   mcp.example.com  域名，Caddy 自动申请并续期 Let's Encrypt 证书
+# ── 管理后台 + MCP 通道 ───────────────────────────────
+# SITE_ADDRESS 写域名（如 mcp.1-2-3-4.sslip.io）时，Caddy 自动申请并续期证书；
+# 写 :80 则是纯 HTTP（此时 Logto 登录不可用，只能看登录页）。
 {$SITE_ADDRESS::80} {
 	encode gzip zstd
 
@@ -32,5 +32,24 @@
 		-Server
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
+	}
+}
+
+# ── Logto（auth-platform，容器在另一份 compose 里）──
+# Logto 的登录页/管理台依赖 Web Crypto，必须是 HTTPS，故同样由这台 Caddy 按域名反代。
+# 走 host.docker.internal 访问宿主机上 auth-platform 发布的 3001/3002，避免跨 compose 组网。
+{$AUTH_SITE_ADDRESS:auth.localhost} {
+	reverse_proxy host.docker.internal:3001
+	header {
+		-Server
+		X-Content-Type-Options nosniff
+	}
+}
+
+{$AUTH_ADMIN_SITE_ADDRESS:admin.localhost} {
+	reverse_proxy host.docker.internal:3002
+	header {
+		-Server
+		X-Content-Type-Options nosniff
 	}
 }
