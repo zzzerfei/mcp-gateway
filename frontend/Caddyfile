@@ -38,7 +38,7 @@
 # ── Logto（auth-platform，容器在另一份 compose 里）──
 # Logto 的登录页/管理台依赖 Web Crypto，必须是 HTTPS，故同样由这台 Caddy 按域名反代。
 # 走 host.docker.internal 访问宿主机上 auth-platform 发布的端口，避免跨 compose 组网。
-# 注意：OIDC 用 13001（宿主机 3001 已被 ai-platform-starter 占用），Admin 用 3002。
+# 注意：Logto 在宿主机上映射到 13001（OIDC）/ 13002（Admin），与 3001 上其他服务错开。
 {$AUTH_SITE_ADDRESS:auth.localhost} {
 	reverse_proxy host.docker.internal:13001
 	header {
@@ -48,7 +48,7 @@
 }
 
 {$AUTH_ADMIN_SITE_ADDRESS:admin.localhost} {
-	reverse_proxy host.docker.internal:3002
+	reverse_proxy host.docker.internal:13002
 	header {
 		-Server
 		X-Content-Type-Options nosniff
