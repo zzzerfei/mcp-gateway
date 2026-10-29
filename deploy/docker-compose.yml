@@ -40,7 +40,7 @@ services:
       AUTH_SITE_ADDRESS: ${AUTH_SITE_ADDRESS:-auth.localhost}
       AUTH_ADMIN_SITE_ADDRESS: ${AUTH_ADMIN_SITE_ADDRESS:-admin.localhost}
     # Linux 下容器默认没有 host.docker.internal，显式指向宿主机网关，
-    # 用于反代宿主机上 auth-platform 发布的 3001/3002
+    # 用于反代宿主机上 auth-platform 发布的 13001/3002
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
