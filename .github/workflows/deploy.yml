@@ -1,0 +1,64 @@
+name: Deploy
+
+# 推送到 main 自动部署；也可以在 Actions 页面手动 Run workflow
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "deploy/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+# 同一时间只允许一个部署，避免两次推送交叉构建
+concurrency:
+  group: deploy-gateway
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 镜像在服务器本地构建：VITE_* 等构建期参数直接读服务器上的 deploy/.env，
+      # 不经过境内外网络传输镜像，也不把配置带到 GitHub。
+      - name: SSH deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          command_timeout: 20m
+          script_stop: true
+          script: |
+            set -e
+            cd /opt/mcp-agent
+            git fetch --prune origin
+            # 服务器只做部署目录，本地改动一律以 main 为准；.env 被 gitignore，不受影响
+            git reset --hard origin/main
+            git log --oneline -1
+
+            cd deploy
+            docker compose build gateway web
+            docker compose up -d --remove-orphans
+
+            echo "等待 gateway 健康检查通过..."
+            for i in $(seq 1 40); do
+              id=$(docker compose ps -q gateway)
+              st=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$id" 2>/dev/null || echo none)
+              [ "$st" = "healthy" ] && break
+              sleep 3
+            done
+            if [ "$st" != "healthy" ]; then
+              echo "gateway 未通过健康检查，状态：$st"
+              docker compose logs --tail 80 gateway
+              exit 1
+            fi
+
+            # 端到端校验：走公网域名，确认 Caddy + 证书 + 后端都正常
+            curl -fsS --max-time 10 https://mcp.zerfei.top/healthz
+            echo ""
+            echo "部署完成"
+
+            docker image prune -f >/dev/null 2>&1 || true
