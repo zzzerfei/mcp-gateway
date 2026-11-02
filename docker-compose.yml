@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: deploy/Dockerfile.backend
+      args:
+        DEBIAN_MIRROR: ${DEBIAN_MIRROR:-deb.debian.org}
     env_file:
       - deploy/.env
     environment:
