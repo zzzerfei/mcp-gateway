@@ -1,0 +1,10 @@
+.git
+**/node_modules
+**/dist
+**/data
+**/.env
+**/.npm-cache
+**/.run
+**/*.db
+**/*.db-wal
+**/*.db-shm
