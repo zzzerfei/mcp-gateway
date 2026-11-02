@@ -1,0 +1,45 @@
+# MCP 网关 · Prometheus 采集配置示例
+#
+# 使用：把本 job 段合并到你的 prometheus.yml 的 scrape_configs 里，
+# 或在 prometheus.yml 顶部 `include` 本文件（Prometheus 原生不支持 include，
+# 需通过 `-config.file` 或 sidecar 挂载）。
+#
+# 默认假设网关在 127.0.0.1:8080 监听，抓取端点为 `/metrics.prom`（P1-B 引入）。
+# 老 `/metrics` 是自定义 JSON，不能被 Prometheus 直接解析，两者并存不冲突。
+#
+# 与网关侧安全须知第 8 条对齐：`/metrics.prom` 无鉴权，务必只暴露在内网
+# 或在 Nginx 反代层加 `allow 10.0.0.0/8; deny all;`。
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: mgw-local
+    env: dev
+
+scrape_configs:
+  - job_name: 'mcp-gateway'
+    metrics_path: /metrics.prom
+    static_configs:
+      - targets: ['127.0.0.1:8080']
+        labels:
+          service: mcp-gateway
+          tier: core
+
+    # 生产多实例：改用 file_sd / kubernetes_sd 让实例上线即被采到
+    # file_sd_configs:
+    #   - files: ['/etc/prometheus/targets/mgw-*.json']
+    #     refresh_interval: 30s
+
+    # 若网关前置 Nginx 反代并做了 BasicAuth，可放开下面两行
+    # basic_auth:
+    #   username: prom
+    #   password_file: /etc/prometheus/secrets/prom.pass
+
+    # 抓取失败时的行为：默认保持 last-known，staleness 5min。
+    # 若你希望 scrape 中断立刻把 gauge 归零（避免告警被 stale 数据掩盖），
+    # 可加 metric_relabel_configs 把 up=0 转成显式 reset。这里保留默认。
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['127.0.0.1:9090']

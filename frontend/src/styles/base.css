@@ -1,0 +1,118 @@
+/* ─────────────────────────────────────────────────────────────
+   全局基础样式：黑白毛玻璃主题的「地基」。
+   原子类由 UnoCSS 负责，这里只放无法用原子类表达的全局观感：
+   背景光晕、滚动条、字体渲染、selection、过渡。
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  color-scheme: dark;
+  --mgw-bg: #08080a;
+  --mgw-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  --mgw-mono: 'SF Mono', 'JetBrains Mono', 'Fira Code', ui-monospace, Menlo,
+    Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--mgw-font);
+  background: var(--mgw-bg);
+  color: rgba(255, 255, 255, 0.85);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow: hidden; /* 布局内部滚动，body 不滚 */
+}
+
+/* 背景：两处极低透明度白色径向光晕 + 一层细网格，营造纵深而非死黑 */
+.mgw-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 40rem at 12% -8%, rgba(255, 255, 255, 0.07), transparent 60%),
+    radial-gradient(50rem 40rem at 108% 12%, rgba(255, 255, 255, 0.05), transparent 55%),
+    radial-gradient(40rem 30rem at 50% 120%, rgba(255, 255, 255, 0.035), transparent 60%);
+}
+
+.mgw-backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(circle at 50% 40%, black, transparent 85%);
+}
+
+/* 等宽字体工具类（审计详情、Key、JSON 展示） */
+.mono {
+  font-family: var(--mgw-mono);
+  font-variant-ligatures: none;
+}
+
+/* 滚动条：极细、半透明，融入玻璃面 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+  background-clip: content-box;
+}
+
+::selection {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+/* 路由切换淡入 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* 遮罩弹层淡入 */
+.mask-enter-active,
+.mask-leave-active {
+  transition: opacity 0.2s ease;
+}
+.mask-enter-from,
+.mask-leave-to {
+  opacity: 0;
+}
+
+/* 通用:focus-visible 描边（键盘可达性） */
+:focus-visible {
+  outline: 1px solid rgba(255, 255, 255, 0.45);
+  outline-offset: 2px;
+}
