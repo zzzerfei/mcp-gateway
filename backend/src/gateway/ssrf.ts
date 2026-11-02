@@ -1,5 +1,5 @@
-import { promises as dns } from 'node:dns';
-import { isIP } from 'node:net';
+import { promises as dns } from "node:dns";
+import { isIP } from "node:net";
 
 /**
  * SSRF 防护：上游 URL 由管理员填入，等于开放内网探测入口。
@@ -10,12 +10,12 @@ import { isIP } from 'node:net';
  */
 
 function ipToLong(ip: string): number {
-  return ip.split('.').reduce((acc, oct) => (acc << 8) + Number(oct), 0) >>> 0;
+  return ip.split(".").reduce((acc, oct) => (acc << 8) + Number(oct), 0) >>> 0;
 }
 
 function inCidr(ip: string, cidr: string): boolean {
-  if (!cidr.includes('/')) return ip === cidr;
-  const [base, bitsStr] = cidr.split('/');
+  if (!cidr.includes("/")) return ip === cidr;
+  const [base, bitsStr] = cidr.split("/");
   const bits = Number(bitsStr);
   if (isIP(base) !== 4 || isIP(ip) !== 4) return false;
   const mask = bits === 0 ? 0 : (~0 << (32 - bits)) >>> 0;
@@ -23,7 +23,7 @@ function inCidr(ip: string, cidr: string): boolean {
 }
 
 /** 永久拒绝的元数据/链路本地网段 */
-const ALWAYS_DENY = ['169.254.0.0/16', '127.0.0.0/8'];
+const ALWAYS_DENY = ["169.254.0.0/16", "127.0.0.0/8"];
 
 export interface SsrfCheckResult {
   ok: boolean;
@@ -45,10 +45,14 @@ export function checkUpstreamUrl(
   try {
     u = new URL(rawUrl);
   } catch {
-    return { ok: false, reason: 'URL 格式非法', hostname: '' };
+    return { ok: false, reason: "URL 格式非法", hostname: "" };
   }
-  if (u.protocol !== 'http:' && u.protocol !== 'https:') {
-    return { ok: false, reason: `协议不允许：${u.protocol}`, hostname: u.hostname };
+  if (u.protocol !== "http:" && u.protocol !== "https:") {
+    return {
+      ok: false,
+      reason: `协议不允许：${u.protocol}`,
+      hostname: u.hostname,
+    };
   }
   const host = u.hostname;
   const ipToCheck = resolvedIp ?? (isIP(host) ? host : null);
@@ -56,18 +60,29 @@ export function checkUpstreamUrl(
   // 云元数据地址永久拒绝（无论白名单如何配置）
   if (ipToCheck) {
     for (const deny of ALWAYS_DENY) {
-      if (deny === '127.0.0.0/8' && allowedCidrs.some((c) => c.startsWith('127.'))) {
+      if (
+        deny === "127.0.0.0/8" &&
+        allowedCidrs.some((c) => c.startsWith("127."))
+      ) {
         // 显式允许本地回环时（开发环境）跳过 127 拒绝
         continue;
       }
       if (inCidr(ipToCheck, deny)) {
-        return { ok: false, reason: `拒绝访问受限网段：${deny}`, hostname: host };
+        return {
+          ok: false,
+          reason: `拒绝访问受限网段：${deny}`,
+          hostname: host,
+        };
       }
     }
   }
 
   if (!allowedCidrs || allowedCidrs.length === 0) {
-    return { ok: false, reason: '未配置 MGW_OUTBOUND_ALLOWED_CIDRS，默认拒绝所有上游', hostname: host };
+    return {
+      ok: false,
+      reason: "未配置 MGW_OUTBOUND_ALLOWED_CIDRS，默认拒绝所有上游",
+      hostname: host,
+    };
   }
 
   // 域名（非 IP）无法在此静态校验，放行但要求 fetch 层二次校验解析 IP
@@ -78,5 +93,52 @@ export function checkUpstreamUrl(
   for (const cidr of allowedCidrs) {
     if (inCidr(ipToCheck, cidr)) return { ok: true, hostname: host };
   }
-  return { ok: false, reason: `主机 ${ipToCheck} 不在出站白名单内`, hostname: host };
+  return {
+    ok: false,
+    reason: `主机 ${ipToCheck} 不在出站白名单内`,
+    hostname: host,
+  };
+}
+
+/**
+ * 异步校验：域名先做 DNS 解析，再对每个解析结果走 CIDR 白名单。
+ * 用于注册/更新上游与建立连接前，避免“域名直接放行”的 SSRF 绕过。
+ * 解析不到 IPv4 一律拒绝（当前白名单仅支持 IPv4 网段）。
+ */
+export async function checkUpstreamUrlResolved(
+  rawUrl: string,
+  allowedCidrs: string[],
+): Promise<SsrfCheckResult & { resolvedIp?: string }> {
+  let u: URL;
+  try {
+    u = new URL(rawUrl);
+  } catch {
+    return { ok: false, reason: "URL 格式非法", hostname: "" };
+  }
+  const host = u.hostname;
+  if (isIP(host)) return checkUpstreamUrl(rawUrl, allowedCidrs);
+
+  // 先跑与解析无关的基础校验（协议、白名单是否为空）
+  const base = checkUpstreamUrl(rawUrl, allowedCidrs);
+  if (!base.ok) return base;
+
+  const [v4, v6] = await Promise.all([
+    dns.resolve4(host).catch(() => [] as string[]),
+    dns.resolve6(host).catch(() => [] as string[]),
+  ]);
+  if (v4.length === 0) {
+    return {
+      ok: false,
+      reason:
+        v6.length > 0
+          ? "域名仅解析到 IPv6，当前白名单仅支持 IPv4"
+          : `域名 ${host} 解析不到 IPv4 地址`,
+      hostname: host,
+    };
+  }
+  for (const ip of v4) {
+    const r = checkUpstreamUrl(rawUrl, allowedCidrs, ip);
+    if (!r.ok) return r;
+  }
+  return { ok: true, hostname: host, resolvedIp: v4[0] };
 }
