@@ -14,7 +14,10 @@ export interface GatewayConfig {
   allowedOrigins: string[];
   secret: string; // AES-256-GCM 主密钥（64 hex）
   adminToken: string;
+  /** 出站策略：blocklist（默认，阻断内网/公网放行）| allowlist（只允许指定网段） */
+  outboundMode: "blocklist" | "allowlist";
   outboundAllowedCidrs: string[];
+  outboundAllowPrivateCidrs: string[];
   maxSessions: number;
   sessionIdleTimeoutS: number;
   stdioMax: number;
@@ -114,10 +117,21 @@ export class ConfigService {
       ),
       secret: secret || this.devFallbackSecret(),
       adminToken,
+      outboundMode:
+        (process.env.MGW_OUTBOUND_MODE ?? file.outboundMode) === "allowlist"
+          ? "allowlist"
+          : "blocklist",
+      // allowlist 模式才生效；默认空 = 拒绝所有（需显式配置）
       outboundAllowedCidrs: list(
         process.env.MGW_OUTBOUND_ALLOWED_CIDRS,
         file.outboundAllowedCidrs,
-        ["10.0.0.0/8", "127.0.0.1/32", "192.168.0.0/16"],
+        [],
+      ),
+      // blocklist 模式下额外放开的私网段（如自建内网上游）
+      outboundAllowPrivateCidrs: list(
+        process.env.MGW_OUTBOUND_ALLOW_PRIVATE_CIDRS,
+        file.outboundAllowPrivateCidrs,
+        [],
       ),
       maxSessions: num(process.env.MGW_MAX_SESSIONS, file.maxSessions, 300),
       sessionIdleTimeoutS: num(

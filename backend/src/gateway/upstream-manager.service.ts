@@ -12,7 +12,7 @@ import { AuditService } from "../governance/audit.service";
 import { NotifyService } from "../notify/im.service";
 import { logger } from "../common/logger";
 import { safeMessage, rawErrorMessage } from "../common/safe-message";
-import { checkUpstreamUrlResolved } from "./ssrf";
+import { checkUpstreamUrlResolved, type OutboundPolicy } from "./ssrf";
 
 /**
  * 上游连接句柄。SDK 是 ESM-only，NestJS 是 CJS，故 SDK 类型用 any，通过动态 import 引入。
@@ -135,12 +135,19 @@ export class UpstreamManagerService implements OnModuleDestroy {
     for (const name of [...this.handles.keys()]) await this.disconnect(name);
   }
 
-  /** 注册/更新前校验 URL（SSRF）：域名解析后逐个 IP 比对白名单，失败直接返回原因不落库 */
+  /** 出站策略：blocklist 默认阻断内网/公网放行；allowlist 仅放行配置网段 */
+  private outboundPolicy(): OutboundPolicy {
+    const c = this.config.get();
+    return {
+      mode: c.outboundMode,
+      allowedCidrs: c.outboundAllowedCidrs,
+      allowPrivateCidrs: c.outboundAllowPrivateCidrs,
+    };
+  }
+
+  /** 注册/更新前校验 URL（SSRF）：域名解析后逐个 IP 按出站策略校验，失败直接返回原因不落库 */
   async validateUrl(url: string): Promise<{ ok: boolean; reason?: string }> {
-    const res = await checkUpstreamUrlResolved(
-      url,
-      this.config.get().outboundAllowedCidrs,
-    );
+    const res = await checkUpstreamUrlResolved(url, this.outboundPolicy());
     return { ok: res.ok, reason: res.reason };
   }
 
@@ -174,7 +181,7 @@ export class UpstreamManagerService implements OnModuleDestroy {
         // 建立连接前再校验一次：防止绕过 Admin API 直接改库写入内网地址
         const check = await checkUpstreamUrlResolved(
           u.url ?? "",
-          this.config.get().outboundAllowedCidrs,
+          this.outboundPolicy(),
         );
         if (!check.ok) throw new Error(`SSRF 校验失败：${check.reason}`);
         transport = new this.sdkHttpTransport(new URL(u.url!), {

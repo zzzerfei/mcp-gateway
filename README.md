@@ -348,23 +348,25 @@ curl -X POST http://127.0.0.1:8080/mcp \
 
 三级优先级：**环境变量 > `backend/config/gateway.json` > 内置默认**。敏感项（`MGW_SECRET`、`ADMIN_TOKEN`）请走环境变量或 `*_FILE`（Docker/K8s secret 挂载），**勿写入 json 提交仓库**。
 
-| 环境变量                                      | 默认值                                   | 说明                                                   |
-| --------------------------------------------- | ---------------------------------------- | ------------------------------------------------------ |
-| `MGW_PORT` / `MGW_HOST`                       | `8080` / `127.0.0.1`                     | 监听端口与地址                                         |
-| `MGW_DATA_DIR`                                | `./data`                                 | SQLite 与备份目录                                      |
-| `MGW_PUBLIC_ORIGIN`                           | `http://127.0.0.1:8080`                  | 对外基址（用于 WWW-Authenticate/OAuth 元数据）         |
-| `MGW_ALLOWED_ORIGINS`                         | 空                                       | 允许的浏览器 Origin（逗号分隔，防 DNS rebinding）      |
-| `MGW_SECRET` / `MGW_SECRET_FILE`              | 开发兜底(64×`a`)                         | **AES-256-GCM 主密钥(64 hex)**，加密上游凭据。生产必设 |
-| `ADMIN_TOKEN` / `ADMIN_TOKEN_FILE`            | `mgw_admin_dev_token`                    | 管理后台令牌。生产必改                                 |
-| `MGW_OUTBOUND_ALLOWED_CIDRS`                  | `10.0.0.0/8,127.0.0.1/32,192.168.0.0/16` | 出站 SSRF 白名单（`169.254.0.0/16` 永久拒绝）          |
-| `MGW_MAX_SESSIONS`                            | `300`                                    | MCP 会话上限                                           |
-| `MGW_SESSION_IDLE_TIMEOUT_S`                  | `1800`                                   | 会话空闲超时(秒)                                       |
-| `MGW_STDIO_MAX`                               | `8`                                      | stdio 上游子进程上限                                   |
-| `MGW_AUDIT_FLUSH_MS` / `MGW_AUDIT_FLUSH_SIZE` | `1000` / `100`                           | 审计攒批刷盘阈值                                       |
-| `MGW_REGISTRY_REFRESH_INTERVAL_S`             | `300`                                    | 注册表定时刷新间隔                                     |
-| `MGW_IM_WEBHOOK`                              | 空                                       | 熔断/告警推送的 IM Webhook                             |
-| `MGW_CONFIG`                                  | `./config/gateway.json`                  | 中间层配置文件路径                                     |
-| `NODE_ENV`                                    | `development`                            | 运行环境                                               |
+| 环境变量                                      | 默认值                  | 说明                                                                |
+| --------------------------------------------- | ----------------------- | ------------------------------------------------------------------- |
+| `MGW_PORT` / `MGW_HOST`                       | `8080` / `127.0.0.1`    | 监听端口与地址                                                      |
+| `MGW_DATA_DIR`                                | `./data`                | SQLite 与备份目录                                                   |
+| `MGW_PUBLIC_ORIGIN`                           | `http://127.0.0.1:8080` | 对外基址（用于 WWW-Authenticate/OAuth 元数据）                      |
+| `MGW_ALLOWED_ORIGINS`                         | 空                      | 允许的浏览器 Origin（逗号分隔，防 DNS rebinding）                   |
+| `MGW_SECRET` / `MGW_SECRET_FILE`              | 开发兜底(64×`a`)        | **AES-256-GCM 主密钥(64 hex)**，加密上游凭据。生产必设              |
+| `ADMIN_TOKEN` / `ADMIN_TOKEN_FILE`            | `mgw_admin_dev_token`   | 管理后台令牌。生产必改                                              |
+| `MGW_OUTBOUND_MODE`                           | `blocklist`             | 出站策略：`blocklist` 阻断内网/公网放行；`allowlist` 仅放行指定网段 |
+| `MGW_OUTBOUND_ALLOW_PRIVATE_CIDRS`            | 空                      | blocklist 模式下额外放开的私网段（自建内网上游用）                  |
+| `MGW_OUTBOUND_ALLOWED_CIDRS`                  | 空                      | allowlist 模式下生效；云元数据地址永久拒绝                          |
+| `MGW_MAX_SESSIONS`                            | `300`                   | MCP 会话上限                                                        |
+| `MGW_SESSION_IDLE_TIMEOUT_S`                  | `1800`                  | 会话空闲超时(秒)                                                    |
+| `MGW_STDIO_MAX`                               | `8`                     | stdio 上游子进程上限                                                |
+| `MGW_AUDIT_FLUSH_MS` / `MGW_AUDIT_FLUSH_SIZE` | `1000` / `100`          | 审计攒批刷盘阈值                                                    |
+| `MGW_REGISTRY_REFRESH_INTERVAL_S`             | `300`                   | 注册表定时刷新间隔                                                  |
+| `MGW_IM_WEBHOOK`                              | 空                      | 熔断/告警推送的 IM Webhook                                          |
+| `MGW_CONFIG`                                  | `./config/gateway.json` | 中间层配置文件路径                                                  |
+| `NODE_ENV`                                    | `development`           | 运行环境                                                            |
 
 完整环境变量模板见 [`backend/.env.example`](backend/.env.example)。
 
@@ -389,7 +391,7 @@ curl -X POST http://127.0.0.1:8080/mcp \
 1. **改主密钥与令牌**：设置强随机 `MGW_SECRET`（`openssl rand -hex 32`）与 `ADMIN_TOKEN`；一旦 `MGW_SECRET` 变更，历史加密的上游凭据将无法解密，需重新录入。
 2. **建表方式切换**：MVP 用 TypeORM `synchronize` 自动建表；生产建议关闭并改用 migration（见部署文档）。
 3. **传输加密**：对外一律经 Nginx/反代终止 TLS，网关只在内网监听 `127.0.0.1`。
-4. **收敛出站白名单**：`MGW_OUTBOUND_ALLOWED_CIDRS` 按实际上游网段最小化。
+4. **出站策略**：默认 `blocklist` 阻断回环/私网/云元数据，公网上游无需配置；接自建内网上游时用 `MGW_OUTBOUND_ALLOW_PRIVATE_CIDRS` 显式放开，高安全场景可切 `allowlist`。
 5. **最小权限**：为每类调用方建独立角色与 Key，善用 `deny` 前置与到期时间；定期轮换。
 6. **stdio 上游环境变量隔离**：网关为防主密钥泄露给第三方子进程，**不会**将 backend 进程的 `process.env` 默认传递或覆盖到 stdio 子进程，仅允许白名单（PATH/HOME/LANG/LC\_\*/TZ/NODE_ENV 等）。业务凭据（如 `DEEPSEEK_API_KEY`）必须在上游记录的 `env` 字段中显式声明（AES-256-GCM 加密存储），确保隔离粒度为“每个上游一份”。
 7. **`.env` 与仓库**：本地开发推荐 `cp backend/.env.example backend/.env`，`start.sh` 会自动 source；`.gitignore` 已屏蔽 `**/.env` 以防误交。生产环境直接以 systemd `EnvironmentFile=` 或 Docker `env_file:` 喂入，不依赖仓库内文件。
